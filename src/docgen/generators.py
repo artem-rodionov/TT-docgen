@@ -1,6 +1,5 @@
 from datetime import date
 from docxtpl import DocxTemplate
-from typing import List, Dict, Any
 
 from utils.utils import RUSSIAN_MONTHS, get_right_date, split_into_columns
 from entities import Worker, Project
