@@ -36,7 +36,7 @@ jobs:
       - name: Archive app
         run: |
           cd dist
-          zip -r DocGen-macOS.zip DocGen.app
+          zip -r DocGen-macOS.zip DocGen
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
