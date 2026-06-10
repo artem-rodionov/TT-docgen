@@ -3,7 +3,7 @@ import logging
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QInputDialog, QLineEdit
 from docgen.design import Ui_MainWindow
-from docgen.entities import Project, Font, font_styles
+from docgen.entities import Font, font_styles
 from docgen.main import get_project_data, get_projects, generate_acts, generate_statements, generate_tasks
 from docgen.settings_manager import SettingsManager
 

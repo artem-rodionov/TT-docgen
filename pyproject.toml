@@ -19,3 +19,6 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.ruff]
+exclude = ["src/docgen/design.py"]
