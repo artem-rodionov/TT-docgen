@@ -28,7 +28,7 @@ jobs:
       - name: Build with PyInstaller
         run: |
           source .venv/bin/activate
-          pyinstaller --windowed --onedir --name DocGen src/docgen/example.py
+          uv run pyinstaller example.spec
 
       - name: Archive app
         run: |
