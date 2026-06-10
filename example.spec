@@ -36,3 +36,26 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
 )
+
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name='DocGen'
+)
+
+app = BUNDLE(
+    coll,
+    name='DocGen.app',
+    bundle_identifier='com.yourcompany.docgen',
+    info_plist={
+        'CFBundleName': 'DocGen',
+        'CFBundleDisplayName': 'DocGen',
+        'CFBundleVersion': '1.0.0',
+        'CFBundleShortVersionString': '1.0.0',
+        'NSHighResolutionCapable': True,
+    },
+)
