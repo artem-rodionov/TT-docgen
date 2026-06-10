@@ -1,9 +1,9 @@
 import yaml
 from pathlib import Path
-from data_fetcher import DataFetcher
-from utils.utils import find_max_full_name
-from entities import Project, Font, create_workers_from_map
-from generators import generate_act, generate_task, generate_statement
+from docgen.data_fetcher import DataFetcher
+from docgen.utils.utils import find_max_full_name
+from docgen.entities import Project, Font, create_workers_from_map
+from docgen.generators import generate_act, generate_task, generate_statement
 from docxtpl import DocxTemplate
 from typing import Dict
 
@@ -11,11 +11,11 @@ def load_config():
     with open(Path(__file__).parent.parent / "config.yaml", "r") as f:
         return yaml.safe_load(f)
 
-config = load_config()
-fetcher = DataFetcher(config["api"]["token"], config["resources"]["worker_table_path"])    
+# config = load_config()
+# fetcher = DataFetcher(config["api"]["token"], config["resources"]["worker_table_path"])    
 
-def get_projects() -> Dict:
-    global config, fetcher
+def get_projects(settings) -> Dict:
+    fetcher = DataFetcher(settings.get("api_token"), settings.get("worker_table_path"))
     projects = fetcher.get_projects()
 
     d = {}
@@ -83,25 +83,24 @@ def demo_gengerate(project_name: str, style: str, glyph_path: str):
     print("Готово!")
 
 
-def generate_acts(project: Project):
+def generate_acts(project: Project, settings):
     for w in project.workers:
-        doc = DocxTemplate(config["templates"]["act_template_path"])
+        doc = DocxTemplate(settings.get("act_template_path"))
         generate_act(doc, project, w)
-        doc.save(config["output"]["act_path"] + "act_{}.docx".format(w.initials()))
+        doc.save(settings.get("output_dir") + "act_{}.docx".format(w.initials()))
 
-def generate_tasks(project: Project):
-    doc = DocxTemplate(config["templates"]["task_template_path"])
+def generate_tasks(project: Project, settings):
+    doc = DocxTemplate(settings.get("task_template_path"))
     generate_task(doc, project)
-    doc.save(config["output"]["task_path"] + "task_{}.docx".format(project.font.name_and_version()))
+    doc.save(settings.get("output_dir") + "task_{}.docx".format(project.font.name_and_version()))
 
-def generate_statements(project: Project):
-    doc = DocxTemplate(config["templates"]["statement_template_path"])
+def generate_statements(project: Project, settings):
+    doc = DocxTemplate(settings.get("statement_template_path"))
     generate_statement(doc, project)
-    doc.save(config["output"]["statement_path"] + "statement_{}.docx".format(project.font.name_and_version()))
+    doc.save(settings.get("output_dir") + "statement_{}.docx".format(project.font.name_and_version()))
 
-def get_project_data(project_name: str) -> Project:
-    global config
-    fetcher = DataFetcher(config["api"]["token"], config["resources"]["worker_table_path"])
+def get_project_data(project_name: str, settings) -> Project:
+    fetcher = DataFetcher(settings.get("api_token"), settings.get("worker_table_path"))
     workers_mapping = fetcher.get_workers_mapping()
 
     workers_data = fetcher.get_workers_data()
@@ -121,7 +120,7 @@ def get_project_data(project_name: str) -> Project:
 
     project = Project(
         work_name=proj["name"],
-        final_name=config["project"]["final_name"],
+        final_name=None,
         start=project_info["start_date"],
         end=project_info["end_date"],
         style=None,

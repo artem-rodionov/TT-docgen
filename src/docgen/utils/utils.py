@@ -1,5 +1,5 @@
 from typing import List
-from entities import Worker
+from docgen.entities import Worker
 
 RUSSIAN_MONTHS = {
     1: "января",
@@ -33,7 +33,3 @@ def split_into_columns(items, num_columns=3):
         end = start + part_size
         cols.append(items[start:end])
     return cols
-# def get_font_instances(file_or_path: Any) -> List[str]:
-#     font = glyphsLib.load(file_or_path)
-#     return [instance.familyName + ' ' +
-#             instance.name for instance in font.instances]

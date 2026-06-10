@@ -1,8 +1,8 @@
 from datetime import date
 from docxtpl import DocxTemplate
 
-from utils.utils import RUSSIAN_MONTHS, get_right_date, split_into_columns
-from entities import Worker, Project
+from docgen.utils.utils import RUSSIAN_MONTHS, get_right_date, split_into_columns
+from docgen.entities import Worker, Project
 
 
 
