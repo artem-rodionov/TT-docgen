@@ -29,7 +29,7 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=True,
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
@@ -40,17 +40,19 @@ exe = EXE(
 coll = COLLECT(
     exe,
     a.binaries,
+    a.zipfiles,
     a.datas,
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='DocGen'
+    name='DocGen',
 )
 
 app = BUNDLE(
     coll,
     name='DocGen.app',
-    bundle_identifier='com.yourcompany.docgen',
+    icon=None,
+    bundle_identifier=None,
     info_plist={
         'CFBundleName': 'DocGen',
         'CFBundleDisplayName': 'DocGen',

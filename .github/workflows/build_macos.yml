@@ -25,6 +25,9 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen
 
+      - name: Clean previous builds
+        run: rm -rf build dist
+
       - name: Build with PyInstaller
         run: |
           source .venv/bin/activate
