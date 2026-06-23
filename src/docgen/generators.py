@@ -1,4 +1,3 @@
-from datetime import date
 from docxtpl import DocxTemplate
 
 from docgen.utils.utils import RUSSIAN_MONTHS, get_right_date, split_into_columns
