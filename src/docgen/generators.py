@@ -8,7 +8,7 @@ from docgen.entities import Worker, Project
 
 def generate_act(doc: DocxTemplate,project: Project, worker: Worker):
         start_month = RUSSIAN_MONTHS[project.start_date.month]
-        current_date = date.today()
+        current_date = project.current_date
         current_month = RUSSIAN_MONTHS[current_date.month]
         passport_month = RUSSIAN_MONTHS[worker.passport.date.month]
         # end_month = RUSSIAN_MONTHS[project.end_date.month]
@@ -66,7 +66,7 @@ def generate_task(doc: DocxTemplate, project: Project):
     doc.render(context)
 
 def generate_statement(doc: DocxTemplate, project: Project):
-    current_date = date.today()
+    current_date = project.current_date
     curr_month = RUSSIAN_MONTHS[current_date.month]
     start_month = RUSSIAN_MONTHS[project.start_date.month]
     end_month = RUSSIAN_MONTHS[project.end_date.month]

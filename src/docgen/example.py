@@ -103,6 +103,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if not self.current_project:
             QMessageBox.warning(self, "Ошибка", "Данные проекта не загружены")
             return
+        
+        start_date = self.startDate.date().toPython()
+        end_date = self.endDate.date().toPython()
+        current_date = self.currentDate.date().toPython()
+
+        if self.current_project and self.current_project.start_date != start_date:
+            logging.debug(f"Дата начала проекта изменена с {self.current_project.start_date} на {start_date}")
+            self.current_project.start_date = start_date
+            
+        if self.current_project and self.current_project.end_date != end_date:
+            logging.debug(f"Дата окончания проекта изменена с {self.current_project.end_date} на {end_date}")
+            self.current_project.end_date = end_date
+
+        if self.current_project and self.current_project.current_date != current_date:
+            logging.debug(f"Текущая дата проекта изменена с {self.current_project.current_date} на {current_date}")
+            self.current_project.current_date = current_date
 
         if self.current_project.head:
             self.current_project.head.is_head = False
@@ -150,12 +166,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.browseButton.setEnabled(True)
 
         QMessageBox.information(self, "Успех", "Генерация завершена")
-
-
-
-        
-        
-
 
 def main():
     app = QApplication()

@@ -85,6 +85,7 @@ class Project:
         self.workers = workers
         self.head = head
         self.font = font
+        self.current_date = date.today()
 
 def count_duration(start: date, end: date) -> int:
     return (end.year - start.year) * 12 + end.month - start.month - (start.day < end.day)
