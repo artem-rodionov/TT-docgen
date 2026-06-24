@@ -4,8 +4,13 @@ from typing import List, Dict
 from datetime import date, datetime
 
 class WorkType(enum.Enum):
-    Create = "Создать"
-    Update = "Обновить"
+    Create = ("Создать", "созданием", "созданию")
+    Update = ("Обновить", "обновлением", "обновлению")
+
+    def __init__(self, infinitive, instrumental, dative):
+        self.first = infinitive
+        self.second = instrumental
+        self.third = dative
 
 class Font:
     '''Класс шрифта'''
