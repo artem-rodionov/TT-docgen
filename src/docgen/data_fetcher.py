@@ -38,7 +38,7 @@ class DataFetcher:
         for row in sheet.iter_rows(values_only=True):
             if row[2] is None:
                 continue
-            other_cols = [row[i] for i in range(14) if i != 2]
+            other_cols = [row[i] for i in range(15) if i != 2]
 
             workers[row[2]] = other_cols
 

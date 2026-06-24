@@ -22,14 +22,15 @@ class Font:
 
 class Passport:
     def __init__(self, data):
-        self.type = data[0]
-        self.code = data[1]
-        self.issueAuthority = data[2]
+        self.type = data[1]
+        self.code = data[2]
+        self.issueAuthority = data[3]
 
         format_str = "%d.%m.%Y"
-        self.date = datetime.strptime(data[3], format_str)
-        self.number = data[4]
-        self.series = data[5]
+        self.date = datetime.strptime(data[4], format_str)
+        self.number = data[5]
+        self.series = data[6]
+        self.birth_date = data[0]
 
     def __str__(self) -> str:
         return f"{self.series} {self.number}"
@@ -100,7 +101,7 @@ def create_worker(worker_dict: Dict, data, mapping) -> Worker:
     name_in_base = worker_dict["name"]
     real_name = mapping[name_in_base]
     worker_data = data[real_name]
-    passport = Passport(worker_data[2:8])
+    passport = Passport(worker_data[2:9])
     full_name = real_name.split(" ")
     last_name = full_name[0]
     first_name = full_name[1]

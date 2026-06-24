@@ -50,3 +50,30 @@ jobs:
         with:
           name: DocGen-macOS
           path: dist/DocGen-macOS.zip
+
+  release:
+    name: Publish Release
+    runs-on: ubuntu-latest   # можно использовать любой раннер, т.к. только скачиваем и загружаем
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download built artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: DocGen-macOS
+          path: dist
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Create Release and Upload Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.get_version.outputs.VERSION }}
+          name: Release ${{ steps.get_version.outputs.VERSION }}
+          draft: false
+          prerelease: false
+          files: dist/DocGen-macOS.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
