@@ -1,0 +1,9 @@
+name: Standart checks in PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+jobs:
+  call_lint_workflow:
+    uses: ./.github/workflows/baseflow.yml

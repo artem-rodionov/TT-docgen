@@ -3,7 +3,7 @@ import logging
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QInputDialog, QLineEdit
 from docgen.design import Ui_MainWindow
-from docgen.entities import Font, font_styles
+from docgen.entities import Font, font_styles, WorkType
 from docgen.main import get_project_data, get_projects, generate_acts, generate_statements, generate_tasks
 from docgen.settings_manager import SettingsManager
 
@@ -103,10 +103,31 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if not self.current_project:
             QMessageBox.warning(self, "Ошибка", "Данные проекта не загружены")
             return
+        
+        start_date = self.startDate.date().toPython()
+        end_date = self.endDate.date().toPython()
+        current_date = self.currentDate.date().toPython()
+
+        if self.current_project and self.current_project.start_date != start_date:
+            logging.debug(f"Дата начала проекта изменена с {self.current_project.start_date} на {start_date}")
+            self.current_project.start_date = start_date
+            
+        if self.current_project and self.current_project.end_date != end_date:
+            logging.debug(f"Дата окончания проекта изменена с {self.current_project.end_date} на {end_date}")
+            self.current_project.end_date = end_date
+
+        if self.current_project and self.current_project.current_date != current_date:
+            logging.debug(f"Текущая дата проекта изменена с {self.current_project.current_date} на {current_date}")
+            self.current_project.current_date = current_date
 
         if self.current_project.head:
             self.current_project.head.is_head = False
-
+        
+        if self.workTypeCheckBox.isChecked():
+            self.current_project.type = WorkType.Create
+        else:
+            self.current_project.type = WorkType.Update
+        
 
         self.current_project.style = self.styleComboBox.currentText()
         self.current_project.font = Font(self.pathLineEdit.toPlainText())
@@ -150,12 +171,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.browseButton.setEnabled(True)
 
         QMessageBox.information(self, "Успех", "Генерация завершена")
-
-
-
-        
-        
-
 
 def main():
     app = QApplication()

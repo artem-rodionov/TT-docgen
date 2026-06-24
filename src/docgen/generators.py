@@ -1,4 +1,3 @@
-from datetime import date
 from docxtpl import DocxTemplate
 
 from docgen.utils.utils import RUSSIAN_MONTHS, get_right_date, split_into_columns
@@ -8,7 +7,7 @@ from docgen.entities import Worker, Project
 
 def generate_act(doc: DocxTemplate,project: Project, worker: Worker):
         start_month = RUSSIAN_MONTHS[project.start_date.month]
-        current_date = date.today()
+        current_date = project.current_date
         current_month = RUSSIAN_MONTHS[current_date.month]
         passport_month = RUSSIAN_MONTHS[worker.passport.date.month]
         # end_month = RUSSIAN_MONTHS[project.end_date.month]
@@ -60,13 +59,14 @@ def generate_task(doc: DocxTemplate, project: Project):
         'col1': col1,
         'col2': col2,
         'col3': col3,
-        'workers': project.workers
+        'workers': project.workers,
+        'work_type': project.type.value
     }
 
     doc.render(context)
 
 def generate_statement(doc: DocxTemplate, project: Project):
-    current_date = date.today()
+    current_date = project.current_date
     curr_month = RUSSIAN_MONTHS[current_date.month]
     start_month = RUSSIAN_MONTHS[project.start_date.month]
     end_month = RUSSIAN_MONTHS[project.end_date.month]

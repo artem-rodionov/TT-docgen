@@ -17,10 +17,10 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit,
-    QFormLayout, QHBoxLayout, QMainWindow, QMenu,
-    QMenuBar, QProgressBar, QPushButton, QSizePolicy,
-    QStatusBar, QTextBrowser, QTextEdit, QVBoxLayout,
-    QWidget)
+    QFormLayout, QGroupBox, QHBoxLayout, QLabel,
+    QMainWindow, QMenu, QMenuBar, QProgressBar,
+    QPushButton, QSizePolicy, QStatusBar, QTextBrowser,
+    QTextEdit, QVBoxLayout, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -69,15 +69,10 @@ class Ui_MainWindow(object):
 
         self.formLayoutWidget_2 = QWidget(self.centralwidget)
         self.formLayoutWidget_2.setObjectName(u"formLayoutWidget_2")
-        self.formLayoutWidget_2.setGeometry(QRect(620, 0, 241, 386))
+        self.formLayoutWidget_2.setGeometry(QRect(620, 0, 321, 211))
         self.formLayout_3 = QFormLayout(self.formLayoutWidget_2)
         self.formLayout_3.setObjectName(u"formLayout_3")
         self.formLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.horizontalLayout_3 = QHBoxLayout()
-        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-
-        self.formLayout_3.setLayout(0, QFormLayout.ItemRole.LabelRole, self.horizontalLayout_3)
-
         self.horizontalLayout_4 = QHBoxLayout()
         self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
         self.textBrowser_2 = QTextBrowser(self.formLayoutWidget_2)
@@ -147,6 +142,8 @@ class Ui_MainWindow(object):
 
         self.styleComboBox = QComboBox(self.formLayoutWidget_2)
         self.styleComboBox.setObjectName(u"styleComboBox")
+        self.styleComboBox.setEditable(False)
+        self.styleComboBox.setModelColumn(0)
 
         self.horizontalLayout_8.addWidget(self.styleComboBox)
 
@@ -159,7 +156,7 @@ class Ui_MainWindow(object):
         self.progressBar.setValue(0)
         self.horizontalLayoutWidget = QWidget(self.centralwidget)
         self.horizontalLayoutWidget.setObjectName(u"horizontalLayoutWidget")
-        self.horizontalLayoutWidget.setGeometry(QRect(330, 370, 231, 117))
+        self.horizontalLayoutWidget.setGeometry(QRect(300, 370, 231, 117))
         self.horizontalLayout_2 = QHBoxLayout(self.horizontalLayoutWidget)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
@@ -188,6 +185,78 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.generateButton)
 
+        self.verticalLayoutWidget = QWidget(self.centralwidget)
+        self.verticalLayoutWidget.setObjectName(u"verticalLayoutWidget")
+        self.verticalLayoutWidget.setGeometry(QRect(620, 300, 313, 91))
+        self.verticalLayout_2 = QVBoxLayout(self.verticalLayoutWidget)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.label_3 = QLabel(self.verticalLayoutWidget)
+        self.label_3.setObjectName(u"label_3")
+
+        self.verticalLayout_2.addWidget(self.label_3)
+
+        self.horizontalLayout_9 = QHBoxLayout()
+        self.horizontalLayout_9.setObjectName(u"horizontalLayout_9")
+        self.label = QLabel(self.verticalLayoutWidget)
+        self.label.setObjectName(u"label")
+
+        self.horizontalLayout_9.addWidget(self.label)
+
+        self.workTypeCheckBox = QCheckBox(self.verticalLayoutWidget)
+        self.workTypeCheckBox.setObjectName(u"workTypeCheckBox")
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.workTypeCheckBox.sizePolicy().hasHeightForWidth())
+        self.workTypeCheckBox.setSizePolicy(sizePolicy)
+        self.workTypeCheckBox.setMinimumSize(QSize(50, 26))
+        self.workTypeCheckBox.setMaximumSize(QSize(50, 26))
+        self.workTypeCheckBox.setStyleSheet(u"/* \u0422\u0440\u0435\u043a (\u0444\u043e\u043d \u043f\u0435\u0440\u0435\u043a\u043b\u044e\u0447\u0430\u0442\u0435\u043b\u044f) */\n"
+"QCheckBox {\n"
+"    background-color: #bdc3c7;\n"
+"    border-radius: 13px;\n"
+"    width: 50px;\n"
+"    height: 26px;\n"
+"}\n"
+"\n"
+"/* \u0418\u043d\u0434\u0438\u043a\u0430\u0442\u043e\u0440 (\u043f\u043e\u043b\u0437\u0443\u043d\u043e\u043a) - \u043e\u0431\u0449\u0438\u0435 \u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438 */\n"
+"QCheckBox::indicator {\n"
+"    width: 22px;\n"
+"    height: 22px;\n"
+"    border-radius: 11px;\n"
+"    margin: 2px;\n"
+"    background-color: white;\n"
+"}\n"
+"\n"
+"/* \u0421\u043e\u0441\u0442\u043e\u044f\u043d\u0438\u0435 \"\u0412\u043a\u043b\u044e\u0447\u0435\u043d\u043e\" (\u0432\u044b\u0431\u0440\u0430\u043d \u0432\u0442\u043e\u0440\u043e\u0439 \u0442\u0438\u043f) */\n"
+"QCheckBox::indicator:checked {\n"
+"    background-color: black;\n"
+"    margin-left: 26px;\n"
+"    margin-right: 2px;\n"
+"}\n"
+"\n"
+"/* \u0421\u043e\u0441\u0442\u043e\u044f\u043d"
+                        "\u0438\u0435 \"\u0412\u044b\u043a\u043b\u044e\u0447\u0435\u043d\u043e\" (\u0432\u044b\u0431\u0440\u0430\u043d \u043f\u0435\u0440\u0432\u044b\u0439 \u0442\u0438\u043f) */\n"
+"QCheckBox::indicator:unchecked {\n"
+"    background-color: white;\n"
+"    margin-left: 2px;\n"
+"    margin-right: 26px;\n"
+"}")
+
+        self.horizontalLayout_9.addWidget(self.workTypeCheckBox)
+
+        self.label_2 = QLabel(self.verticalLayoutWidget)
+        self.label_2.setObjectName(u"label_2")
+
+        self.horizontalLayout_9.addWidget(self.label_2)
+
+
+        self.verticalLayout_2.addLayout(self.horizontalLayout_9)
+
+        self.groupBox = QGroupBox(self.centralwidget)
+        self.groupBox.setObjectName(u"groupBox")
+        self.groupBox.setGeometry(QRect(410, 550, 541, 80))
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
@@ -209,7 +278,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
-        self.tableWIthDataAction.setText(QCoreApplication.translate("MainWindow", u"\u0422\u0430\u0431\u043b\u0438\u0446\u0430 \u0441 \u0434\u0430\u043d\u043d\u044b\u043c\u0438", None))
+        self.tableWIthDataAction.setText(QCoreApplication.translate("MainWindow", u"\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438", None))
         self.pathLineEdit.setHtml(QCoreApplication.translate("MainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
@@ -266,6 +335,11 @@ class Ui_MainWindow(object):
         self.statementCheckBox.setText(QCoreApplication.translate("MainWindow", u"\u0417\u0430\u0432\u0435\u0440\u0435\u043d\u0438\u0435", None))
         self.actsCheckBox.setText(QCoreApplication.translate("MainWindow", u"\u0410\u043a\u0442\u044b", None))
         self.generateButton.setText(QCoreApplication.translate("MainWindow", u"\u0421\u0433\u0435\u043d\u0435\u0440\u0438\u0440\u043e\u0432\u0430\u0442\u044c", None))
+        self.label_3.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p align=\"center\">\u0422\u0438\u043f \u0440\u0430\u0431\u043e\u0442\u044b</p></body></html>", None))
+        self.label.setText(QCoreApplication.translate("MainWindow", u"\u041e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435", None))
+        self.workTypeCheckBox.setText("")
+        self.label_2.setText(QCoreApplication.translate("MainWindow", u"\u0421\u043e\u0437\u0434\u0430\u043d\u0438\u0435", None))
+        self.groupBox.setTitle(QCoreApplication.translate("MainWindow", u"\u0422\u0438\u043f \u0440\u0430\u0431\u043e\u0442\u044b", None))
         self.menu.setTitle(QCoreApplication.translate("MainWindow", u"\u0424\u0430\u0439\u043b", None))
     # retranslateUi
 

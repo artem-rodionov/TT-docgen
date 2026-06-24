@@ -1,6 +1,11 @@
 import glyphsLib
+import enum
 from typing import List, Dict
 from datetime import date, datetime
+
+class WorkType(enum.Enum):
+    Create = "Создать"
+    Update = "Обновить"
 
 class Font:
     '''Класс шрифта'''
@@ -75,7 +80,7 @@ class Worker:
 
 class Project:
     '''Класс проекта'''
-    def __init__(self, work_name: str, final_name: str, start: str, end: str, style: str, workers: List[Worker], font: Font, head: Worker):
+    def __init__(self, work_name: str, final_name: str, start: str, end: str, style: str, workers: List[Worker], font: Font, head: Worker, type: WorkType = WorkType.Create):
         self.work_name = work_name
         self.final_name = final_name
         self.start_date = date.fromisoformat(start)
@@ -85,6 +90,8 @@ class Project:
         self.workers = workers
         self.head = head
         self.font = font
+        self.current_date = date.today()
+        self.type = type
 
 def count_duration(start: date, end: date) -> int:
     return (end.year - start.year) * 12 + end.month - start.month - (start.day < end.day)
