@@ -59,7 +59,8 @@ def generate_task(doc: DocxTemplate, project: Project):
         'col1': col1,
         'col2': col2,
         'col3': col3,
-        'workers': project.workers
+        'workers': project.workers,
+        'work_type': project.type.value
     }
 
     doc.render(context)

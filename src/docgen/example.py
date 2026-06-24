@@ -3,7 +3,7 @@ import logging
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QInputDialog, QLineEdit
 from docgen.design import Ui_MainWindow
-from docgen.entities import Font, font_styles
+from docgen.entities import Font, font_styles, WorkType
 from docgen.main import get_project_data, get_projects, generate_acts, generate_statements, generate_tasks
 from docgen.settings_manager import SettingsManager
 
@@ -122,7 +122,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         if self.current_project.head:
             self.current_project.head.is_head = False
-
+        
+        if self.workTypeCheckBox.isChecked():
+            self.current_project.type = WorkType.Create
+        else:
+            self.current_project.type = WorkType.Update
+        
 
         self.current_project.style = self.styleComboBox.currentText()
         self.current_project.font = Font(self.pathLineEdit.toPlainText())
