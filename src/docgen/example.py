@@ -1,13 +1,26 @@
 from datetime import date
 import logging
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QInputDialog, QLineEdit
-from docgen.design import Ui_MainWindow
+from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QInputDialog, QLineEdit, QDialog
+from docgen.design.design import Ui_MainWindow
+from docgen.design.ui_settings import Ui_Dialog
 from docgen.entities import Font, font_styles, WorkType
 from docgen.main import get_project_data, get_projects, generate_acts, generate_statements, generate_tasks
 from docgen.settings_manager import SettingsManager
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+class SettingsDialog(QDialog, Ui_Dialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        # 1. Создаём экземпляр сгенерированного класса
+        self.ui = Ui_Dialog()
+        # 2. Вызываем setupUi, передавая self (наш диалог)
+        self.ui.setupUi(self)
+
+        self.setWindowTitle("Настройки")
+        # Здесь можно добавить дополнительную логику, например, соединить сигналы
+        # self.ui.buttonBox.accepted.connect(self.accept)
 
 class MainWindow(QMainWindow, Ui_MainWindow):
 
@@ -27,9 +40,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.projectInfoButton.clicked.connect(self.get_project_info)
         self.generateButton.clicked.connect(self.generate)
 
-        self.tableWIthDataAction.triggered.connect(self.select_folder_with_workers_data)
+        self.tableWIthDataAction.triggered.connect(self.open_settings)
 
         self.current_project = None
+
+    def open_settings(self):
+        dialog = SettingsDialog(self)          # родитель — главное окно
+        result = dialog.exec()                 # показываем модально
+
+        if result == QDialog.Accepted:         # нажата OK
+            value = dialog.get_settings()
+            print(f"Получены настройки: {value}")
+            # Здесь можно применить настройки к приложению
+        else:
+            print("Настройки отменены")
 
     def check_required_settings(self):
         if not self.settings.has("api_token"):
