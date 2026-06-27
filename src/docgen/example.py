@@ -1,4 +1,6 @@
 from datetime import date
+from functools import partial
+from typing import Dict
 import logging
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QInputDialog, QLineEdit, QDialog
@@ -13,14 +15,88 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 class SettingsDialog(QDialog, Ui_Dialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        # 1. Создаём экземпляр сгенерированного класса
         self.ui = Ui_Dialog()
-        # 2. Вызываем setupUi, передавая self (наш диалог)
         self.ui.setupUi(self)
 
         self.setWindowTitle("Настройки")
-        # Здесь можно добавить дополнительную логику, например, соединить сигналы
-        # self.ui.buttonBox.accepted.connect(self.accept)
+
+        self.settings = parent.settings
+
+        self.ui.apiTokenLineEdit.setText(self.settings.get("api_token"))
+        self.ui.workerTableLineEdit.setText(self.settings.get("worker_table_path"))
+        self.ui.taskPathLineEdit.setText(self.settings.get("task_template_path"))
+        self.ui.statementPathLineEdit.setText(self.settings.get("statement_template_path"))
+        self.ui.actPathLineEdit.setText(self.settings.get("act_template_path"))
+        self.ui.savePathLineEdit.setText(self.settings.get("output_dir"))
+
+        self.ui.workerBrowseButton.clicked.connect(
+            partial(self.select_folder,
+                    self.ui.workerTableLineEdit,
+                    "Таблица с данными о работниках", 
+                    "*.xlsx"
+            )
+        )
+        self.ui.taskBrowseButton.clicked.connect(
+            partial(self.select_folder,
+                    self.ui.taskPathLineEdit,
+                    "Шаблон задания", 
+                    "*.docx"
+            )
+        )
+        self.ui.statementBrowseButton.clicked.connect(
+            partial(self.select_folder,
+                    self.ui.statementPathLineEdit,
+                    "Шаблон заверения", 
+                    "*.docx"
+            )
+        )
+        self.ui.actBrowseButton.clicked.connect(
+            partial(self.select_folder,
+                    self.ui.actPathLineEdit,
+                    "Шаблон акта", 
+                    "*.docx"
+            )
+        )
+        self.ui.saveBrowseButton.clicked.connect(
+            partial(self.select_folder,
+                    self.ui.savePathLineEdit,
+                    "Папка для сохранения", 
+                    None
+            )
+        )
+
+
+        self.ui.buttonBox.accepted.connect(self.accept)
+        self.ui.buttonBox.rejected.connect(self.reject)
+    
+    def select_folder(self, line_edit,  name: str, file_type: str):
+        initial_dir = line_edit.text() or ""
+        if file_type:
+            file_path, _ = QFileDialog.getOpenFileName(
+                self,
+                f"Выберите файл {name}",
+                initial_dir,
+                file_type
+            )
+        else:
+            file_path = QFileDialog.getExistingDirectory(
+                self,
+                f"Выберите папку {name}",
+                initial_dir
+            )
+        if file_path:
+            line_edit.setText(file_path)
+
+    def get_settings(self):
+        settings = {}
+        settings["api_token"] = self.ui.apiTokenLineEdit.text()
+        settings["worker_table_path"] = self.ui.workerTableLineEdit.text()
+        settings["task_template_path"] = self.ui.taskPathLineEdit.text()
+        settings["statement_template_path"] = self.ui.statementPathLineEdit.text()
+        settings["act_template_path"] = self.ui.actPathLineEdit.text()
+        settings["output_dir"] = self.ui.savePathLineEdit.text()
+        return settings
+
 
 class MainWindow(QMainWindow, Ui_MainWindow):
 
@@ -45,13 +121,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.current_project = None
 
     def open_settings(self):
-        dialog = SettingsDialog(self)          # родитель — главное окно
-        result = dialog.exec()                 # показываем модально
+        dialog = SettingsDialog(self)          
+        result = dialog.exec()                 
 
-        if result == QDialog.Accepted:         # нажата OK
+        if result == QDialog.Accepted:
             value = dialog.get_settings()
+            self._set_settings(value)
             print(f"Получены настройки: {value}")
-            # Здесь можно применить настройки к приложению
         else:
             print("Настройки отменены")
 
@@ -195,6 +271,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.browseButton.setEnabled(True)
 
         QMessageBox.information(self, "Успех", "Генерация завершена")
+
+    def _set_settings(self, settings: Dict):
+        for key, value in settings.items():
+            if self.settings.has(key) and self.settings.get(key) != value:
+                logging.debug(f"Изменение настройки {key} с {self.settings.get(key)} на {value}")
+                self.settings.set(key, value)
 
 def main():
     app = QApplication()
