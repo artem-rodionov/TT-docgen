@@ -15,7 +15,7 @@ class SettingsKey:
         return [getattr(cls, attr) for attr in dir(cls) if not attr.startswith("_") and attr.isupper()]
 
 class SettingsManager:
-
+    '''Класс для работы с настройками.'''
     def __init__(self, filename="settings.json"):
         self.filename = filename
         self._settings = {}
@@ -30,6 +30,7 @@ class SettingsManager:
         return base_dir / self.filename
 
     def load(self):
+        '''Загрузка настроек из файла.'''
         if self._file_path.exists():
             try:
                 with open(self._file_path, 'r', encoding='utf-8') as f:
@@ -40,6 +41,7 @@ class SettingsManager:
             self._settings = {}
 
     def save(self):
+        '''Сохранение настроек в файл.'''
         try:
             with open(self._file_path, 'w', encoding='utf-8') as f:
                 json.dump(self._settings, f, indent=2, ensure_ascii=False)
@@ -48,21 +50,26 @@ class SettingsManager:
 
     
     def get(self, key, default=None):
+        '''Получение значения настройки.'''
         return self._settings.get(key, default)
 
     def set(self, key, value):
+        '''Установка значения настройки.'''
         self._settings[key] = value
         self.save()
 
     def has(self, key):
+        '''Проверка наличия настройки.'''
         return key in self._settings
 
     def remove(self, key):
+        '''Удаление настройки.'''
         if key in self._settings:
             del self._settings[key]
             self.save()
 
     def update(self, settings_dict):
+        '''Обновление множества настроек.'''
         changed = False
         for key, value in settings_dict.items():
             if self.get(key) != value:

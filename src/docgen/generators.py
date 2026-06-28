@@ -6,6 +6,7 @@ from docgen.entities import Worker, Project
 
 
 def generate_act(doc: DocxTemplate,project: Project, worker: Worker):
+        '''Генерация акта по шаблону.'''
         start_month = RUSSIAN_MONTHS[project.start_date.month]
         current_date = project.current_date
         current_month = RUSSIAN_MONTHS[current_date.month]
@@ -33,6 +34,7 @@ def generate_act(doc: DocxTemplate,project: Project, worker: Worker):
         doc.render(context)
 
 def generate_task(doc: DocxTemplate, project: Project):
+    '''Генерация задания по шаблону.'''
     start_month = RUSSIAN_MONTHS[project.start_date.month]
 
     outsource = Worker.get_outsource_table(project.workers)
@@ -66,6 +68,7 @@ def generate_task(doc: DocxTemplate, project: Project):
     doc.render(context)
 
 def generate_statement(doc: DocxTemplate, project: Project):
+    '''Генерация заверения по шаблону.'''
     current_date = project.current_date
     curr_month = RUSSIAN_MONTHS[current_date.month]
     start_month = RUSSIAN_MONTHS[project.start_date.month]

@@ -17,10 +17,10 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit,
-    QFormLayout, QGroupBox, QHBoxLayout, QLabel,
-    QMainWindow, QMenu, QMenuBar, QProgressBar,
-    QPushButton, QSizePolicy, QStatusBar, QTextBrowser,
-    QTextEdit, QVBoxLayout, QWidget)
+    QFormLayout, QHBoxLayout, QLabel, QMainWindow,
+    QMenu, QMenuBar, QProgressBar, QPushButton,
+    QSizePolicy, QStatusBar, QTextBrowser, QTextEdit,
+    QVBoxLayout, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -29,6 +29,8 @@ class Ui_MainWindow(object):
         MainWindow.resize(1078, 763)
         self.tableWIthDataAction = QAction(MainWindow)
         self.tableWIthDataAction.setObjectName(u"tableWIthDataAction")
+        self.projectsReloadAction = QAction(MainWindow)
+        self.projectsReloadAction.setObjectName(u"projectsReloadAction")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.formLayoutWidget = QWidget(self.centralwidget)
@@ -69,7 +71,7 @@ class Ui_MainWindow(object):
 
         self.formLayoutWidget_2 = QWidget(self.centralwidget)
         self.formLayoutWidget_2.setObjectName(u"formLayoutWidget_2")
-        self.formLayoutWidget_2.setGeometry(QRect(620, 0, 321, 211))
+        self.formLayoutWidget_2.setGeometry(QRect(620, 0, 321, 386))
         self.formLayout_3 = QFormLayout(self.formLayoutWidget_2)
         self.formLayout_3.setObjectName(u"formLayout_3")
         self.formLayout_3.setContentsMargins(0, 0, 0, 0)
@@ -187,7 +189,7 @@ class Ui_MainWindow(object):
 
         self.verticalLayoutWidget = QWidget(self.centralwidget)
         self.verticalLayoutWidget.setObjectName(u"verticalLayoutWidget")
-        self.verticalLayoutWidget.setGeometry(QRect(620, 300, 313, 91))
+        self.verticalLayoutWidget.setGeometry(QRect(630, 390, 313, 91))
         self.verticalLayout_2 = QVBoxLayout(self.verticalLayoutWidget)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
@@ -254,9 +256,6 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_2.addLayout(self.horizontalLayout_9)
 
-        self.groupBox = QGroupBox(self.centralwidget)
-        self.groupBox.setObjectName(u"groupBox")
-        self.groupBox.setGeometry(QRect(410, 550, 541, 80))
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
@@ -270,6 +269,7 @@ class Ui_MainWindow(object):
 
         self.menubar.addAction(self.menu.menuAction())
         self.menu.addAction(self.tableWIthDataAction)
+        self.menu.addAction(self.projectsReloadAction)
 
         self.retranslateUi(MainWindow)
 
@@ -279,6 +279,7 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
         self.tableWIthDataAction.setText(QCoreApplication.translate("MainWindow", u"\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438", None))
+        self.projectsReloadAction.setText(QCoreApplication.translate("MainWindow", u"\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c \u043f\u0440\u043e\u0435\u043a\u0442\u044b", None))
         self.pathLineEdit.setHtml(QCoreApplication.translate("MainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
@@ -339,7 +340,6 @@ class Ui_MainWindow(object):
         self.label.setText(QCoreApplication.translate("MainWindow", u"\u041e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435", None))
         self.workTypeCheckBox.setText("")
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"\u0421\u043e\u0437\u0434\u0430\u043d\u0438\u0435", None))
-        self.groupBox.setTitle(QCoreApplication.translate("MainWindow", u"\u0422\u0438\u043f \u0440\u0430\u0431\u043e\u0442\u044b", None))
         self.menu.setTitle(QCoreApplication.translate("MainWindow", u"\u0424\u0430\u0439\u043b", None))
     # retranslateUi
 
