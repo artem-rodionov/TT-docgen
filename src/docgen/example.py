@@ -2,7 +2,7 @@ from datetime import date
 from functools import partial
 import logging
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QInputDialog, QLineEdit, QDialog
+from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QDialog
 from docgen.design.design import Ui_MainWindow
 from docgen.design.ui_settings import Ui_Dialog
 from docgen.entities import Font, font_styles, WorkType
