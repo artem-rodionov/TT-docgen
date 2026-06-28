@@ -1,12 +1,13 @@
+import requests
+
 import pytest
 import os
 from docgen.data_fetcher import DataFetcher
 
-@pytest.fixture
 def api_token():
     token = os.environ.get("API_TOKEN")
     if token is None:
-        pytest.fail("API_TOKEN not set")
+        pytest.skip("API_TOKEN not set, skipping integration tests")
     return token
 
 @pytest.fixture
@@ -28,12 +29,16 @@ data = {
                              "046123663373", "АО \"АЛЬФА-БАНК\" №1", "79921665959502890126", "898698725"]
 }
 
-def test_fetcher_get_projects(path, api_token):
+def test_fetcher_get_projects(path):
+    api_token = api_token()
     fetcher = DataFetcher(path=path, token=api_token)
     try:
         projects = fetcher.get_projects()
+    except requests.exceptions.HTTPError as e:
+        status = e.response.status_code
+        pytest.fail(f"HTTP error {status} while fetching projects")
     except Exception as e:
-        pytest.fail(f"Exception occurred: {e}")
+        pytest.fail(f"Unexpected error: {type(e).__name__}")
     
     if not projects:
         pytest.fail("No projects fetched")
@@ -53,8 +58,8 @@ def test_fetcher_with_invalid_path():
     except Exception:
         pass
 
-def test_fetcher_mapping(path, api_token):
-    fetcher = DataFetcher(path=path, token=api_token)
+def test_fetcher_mapping(path):
+    fetcher = DataFetcher(path=path, token="")
     try:
         names = fetcher.get_workers_mapping()
         assert names is not None
@@ -62,8 +67,8 @@ def test_fetcher_mapping(path, api_token):
     except Exception as e:
         pytest.fail(f"Exception occurred: {e}")
 
-def test_fetcher_workers_data(path, api_token):
-    fetcher = DataFetcher(path=path, token=api_token)
+def test_fetcher_workers_data(path):
+    fetcher = DataFetcher(path=path, token="")
     try:
         workers_data = fetcher.get_workers_data()
         assert workers_data is not None
