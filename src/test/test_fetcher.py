@@ -4,7 +4,7 @@ import pytest
 import os
 from docgen.data_fetcher import DataFetcher
 
-def api_token():
+def get_api_token():
     token = os.environ.get("API_TOKEN")
     if token is None:
         pytest.skip("API_TOKEN not set, skipping integration tests")
@@ -30,7 +30,7 @@ data = {
 }
 
 def test_fetcher_get_projects(path):
-    api_token = api_token()
+    api_token = get_api_token()
     fetcher = DataFetcher(path=path, token=api_token)
     try:
         projects = fetcher.get_projects()
