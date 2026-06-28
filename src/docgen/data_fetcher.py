@@ -26,6 +26,8 @@ class DataFetcher:
             while i < len(row):
                 col = row[i]
                 if col is not None:
+                    if row[i+1] is None:
+                        raise ValueError(col)
                     names[col] = row[i+1]
                     i += 2
                     continue

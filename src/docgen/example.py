@@ -2,7 +2,6 @@ from datetime import date
 from functools import partial
 import logging
 import time
-import requests
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QDialog
 from docgen.design.design import Ui_MainWindow
@@ -163,7 +162,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.current_project:
             self.current_project.workers = []
 
-        self.current_project = get_project_data(project_name, self.settings)
+        try:
+            self.current_project = get_project_data(project_name, self.settings)
+        except Exception as e:
+            if isinstance(e, KeyError):
+                QMessageBox.warning(self, "Ошибка", f"В таблице нет работника: {str(e)}\n\nДобавьте информацию о работнике и загрузите проект снова.")
+            if isinstance(e, ValueError):
+                QMessageBox.warning(self, "Ошибка", f"В таблице нет ФИО работника: {str(e)}\n\nДобавьте информацию о работнике и загрузите проект снова.")
+            return
+            
 
         self.startDate.setDate(self.current_project.start_date)
         self.endDate.setDate(self.current_project.end_date)
