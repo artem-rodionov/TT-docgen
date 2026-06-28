@@ -1,6 +1,8 @@
 from datetime import date
 from functools import partial
 import logging
+import time
+import requests
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QDialog
 from docgen.design.design import Ui_MainWindow
@@ -116,17 +118,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.settings = SettingsManager()
 
-        self.check_required_settings()
+        self._check_required_settings()
         
-        projects = get_projects(self.settings)
-
-        self.projectsComboBox.addItems(projects.keys())
+        self._setup_projects()
+        
         self.styleComboBox.addItems(font_styles)
         self.browseButton.clicked.connect(self.select_folder)
         self.projectInfoButton.clicked.connect(self.get_project_info)
         self.generateButton.clicked.connect(self.generate)
 
         self.tableWIthDataAction.triggered.connect(self.open_settings)
+        self.projectsReloadAction.triggered.connect(self._setup_projects)
 
         self.current_project = None
 
@@ -140,7 +142,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             print("Настройки отменены")
 
-    def check_required_settings(self):
+    def _check_required_settings(self):
         for s in SettingsKey.all_keys():
             if not self.settings.get(s):
                 self.open_settings()
@@ -255,6 +257,40 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.browseButton.setEnabled(True)
 
         QMessageBox.information(self, "Успех", "Генерация завершена")
+
+    def _get_projects(self, interval=2, timeout=10):
+        start = time.time()
+        last_error = None
+        while time.time() - start < timeout:
+            try:
+                projects = get_projects(self.settings)
+                if projects is not None:  
+                    return projects
+            except Exception as e:
+                last_error = e
+                logging.debug(f"Попытка не удалась: {e}")
+            elapsed = time.time() - start
+            remaining = timeout - elapsed
+            if remaining <= 0:
+                break
+            time.sleep(min(interval, remaining))
+        if last_error:
+            QMessageBox.critical(
+            self,
+            "Ошибка получения проектов",
+            f"Не удалось получить проекты за {timeout} секунд.\n"
+            f"Последняя ошибка: {last_error}"
+        )
+        else:
+            return None
+        
+    def _setup_projects(self):
+        self.projectsComboBox.clear()
+        projects = self._get_projects(2, 10)
+        projects_names = projects.keys() if projects else []
+        self.projectsComboBox.addItems(projects_names)
+
+                
 
 def main():
     app = QApplication()
