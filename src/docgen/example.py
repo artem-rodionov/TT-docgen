@@ -101,12 +101,12 @@ class SettingsDialog(QDialog):
 
     def get_settings(self):
         settings = {}
-        settings["api_token"] = self.ui.apiTokenLineEdit.text()
-        settings["worker_table_path"] = self.ui.workerTableLineEdit.text()
-        settings["task_template_path"] = self.ui.taskPathLineEdit.text()
-        settings["statement_template_path"] = self.ui.statementPathLineEdit.text()
-        settings["act_template_path"] = self.ui.actPathLineEdit.text()
-        settings["output_dir"] = self.ui.savePathLineEdit.text()
+        settings[SettingsKey.API_TOKEN] = self.ui.apiTokenLineEdit.text()
+        settings[SettingsKey.WORKER_TABLE_PATH] = self.ui.workerTableLineEdit.text()
+        settings[SettingsKey.TASK_TEMPLATE_PATH] = self.ui.taskPathLineEdit.text()
+        settings[SettingsKey.STATEMENT_TEMPLATE_PATH] = self.ui.statementPathLineEdit.text()
+        settings[SettingsKey.ACT_TEMPLATE_PATH] = self.ui.actPathLineEdit.text()
+        settings[SettingsKey.OUTPUT_DIR] = self.ui.savePathLineEdit.text()
         return settings
 
 
