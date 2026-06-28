@@ -17,14 +17,17 @@ RUSSIAN_MONTHS = {
 }
 
 def get_right_date(value: int) -> str:
+    '''Получение даты в правильном формате.'''
     if int(value) / 10 < 1:
             return "0" + str(value)
     return str(value)
 
 def find_max_full_name(workers: List[Worker]) -> int:
+      '''Поиск максимальной длины имени.'''
       return max([len(w.full_name()) for w in workers])
 
 def split_into_columns(items, num_columns=3):
+    '''Разбиение списка на столбцы.'''
     total = len(items)
     part_size = (total + num_columns - 1) // num_columns
     cols = []

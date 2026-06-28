@@ -54,7 +54,7 @@ class Worker:
         self.inn = inn
 
     def full_name(self, InTable: bool = False) -> str:
-        """Return the full name in the format: last name, first name, patronymic."""
+        '''Возвращает полное имя в формате: Фамилия Имя Отчество.'''
         full_name = f"{self.last_name} {self.first_name} {self.patronymic}".strip()
         if InTable and self.is_head:
             return full_name + " - Руководитель проекта"
@@ -73,13 +73,13 @@ class Worker:
 
     @staticmethod
     def get_outsource_table(workers: List) -> List:
-        """Return the table of outsource workers."""
+        '''Возвращает таблицу работников на аутсорсе.'''
         workers = [worker for worker in workers if worker.outsource]
         return workers
     
     @staticmethod
     def get_insource_table(workers: List) -> List:
-        """Return the table of outsource workers."""
+        '''Возвращает таблицу штатных работников.'''
         workers = [worker for worker in workers if not worker.outsource]
         return workers
 
@@ -128,7 +128,6 @@ def create_worker(worker_dict: Dict, data, mapping) -> Worker:
 
 def create_workers_from_map(list_from_db: List, data, mapping_name) -> List[Worker]:
     workers = []
-    
     for w in list_from_db:
         workers.append(create_worker(w, data, mapping_name))
     return workers

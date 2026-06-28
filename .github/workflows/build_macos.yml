@@ -43,7 +43,7 @@ jobs:
         run: |
           source .venv/bin/activate
           # uv run pyinstaller example.spec
-          pyinstaller --windowed --onedir --name DocGen --hidden-import openstep_plist.util --hidden-import openstep_plist.parser src/docgen/example.py
+          pyinstaller --windowed --onedir --name DocGen --hidden-import openstep_plist.util --hidden-import openstep_plist.parser src/docgen/main.py
 
       - name: Archive app
         run: |
