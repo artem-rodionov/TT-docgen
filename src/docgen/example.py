@@ -1,13 +1,112 @@
 from datetime import date
+from functools import partial
 import logging
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QInputDialog, QLineEdit
-from docgen.design import Ui_MainWindow
+from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QDialog
+from docgen.design.design import Ui_MainWindow
+from docgen.design.ui_settings import Ui_Dialog
 from docgen.entities import Font, font_styles, WorkType
 from docgen.main import get_project_data, get_projects, generate_acts, generate_statements, generate_tasks
-from docgen.settings_manager import SettingsManager
+from docgen.settings_manager import SettingsManager, SettingsKey
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+class SettingsDialog(QDialog):
+    def __init__(self, settings_manager, parent=None):
+        super().__init__(parent)
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+
+        self.setWindowTitle("Настройки")
+
+        self.settings = settings_manager
+
+        self.ui.apiTokenLineEdit.setText(self.settings.get(SettingsKey.API_TOKEN, ""))
+        self.ui.workerTableLineEdit.setText(self.settings.get(SettingsKey.WORKER_TABLE_PATH, ""))
+        self.ui.taskPathLineEdit.setText(self.settings.get(SettingsKey.TASK_TEMPLATE_PATH, ""))
+        self.ui.statementPathLineEdit.setText(self.settings.get(SettingsKey.STATEMENT_TEMPLATE_PATH, ""))
+        self.ui.actPathLineEdit.setText(self.settings.get(SettingsKey.ACT_TEMPLATE_PATH, ""))
+        self.ui.savePathLineEdit.setText(self.settings.get(SettingsKey.OUTPUT_DIR, ""))
+
+        self.ui.workerBrowseButton.clicked.connect(
+            partial(self.select_folder,
+                    self.ui.workerTableLineEdit,
+                    "Таблица с данными о работниках", 
+                    "*.xlsx"
+            )
+        )
+        self.ui.taskBrowseButton.clicked.connect(
+            partial(self.select_folder,
+                    self.ui.taskPathLineEdit,
+                    "Шаблон задания", 
+                    "*.docx"
+            )
+        )
+        self.ui.statementBrowseButton.clicked.connect(
+            partial(self.select_folder,
+                    self.ui.statementPathLineEdit,
+                    "Шаблон заверения", 
+                    "*.docx"
+            )
+        )
+        self.ui.actBrowseButton.clicked.connect(
+            partial(self.select_folder,
+                    self.ui.actPathLineEdit,
+                    "Шаблон акта", 
+                    "*.docx"
+            )
+        )
+        self.ui.saveBrowseButton.clicked.connect(
+            partial(self.select_folder,
+                    self.ui.savePathLineEdit,
+                    "Папка для сохранения", 
+                    None
+            )
+        )
+
+        self.ui.buttonBox.accepted.connect(self.save_and_accept)
+        self.ui.buttonBox.rejected.connect(self.reject)
+    
+    def save_and_accept(self):
+        new_settings = {
+            SettingsKey.API_TOKEN: self.ui.apiTokenLineEdit.text(),
+            SettingsKey.WORKER_TABLE_PATH: self.ui.workerTableLineEdit.text(),
+            SettingsKey.TASK_TEMPLATE_PATH: self.ui.taskPathLineEdit.text(),
+            SettingsKey.STATEMENT_TEMPLATE_PATH: self.ui.statementPathLineEdit.text(),
+            SettingsKey.ACT_TEMPLATE_PATH: self.ui.actPathLineEdit.text(),
+            SettingsKey.OUTPUT_DIR: self.ui.savePathLineEdit.text()
+        }
+        self.settings.update(new_settings)
+        self.accept()
+    
+    def select_folder(self, line_edit,  name: str, file_type: str):
+        initial_dir = line_edit.text() or ""
+        if file_type:
+            file_path, _ = QFileDialog.getOpenFileName(
+                self,
+                f"Выберите файл {name}",
+                initial_dir,
+                file_type
+            )
+        else:
+            file_path = QFileDialog.getExistingDirectory(
+                self,
+                f"Выберите папку {name}",
+                initial_dir
+            )
+        if file_path:
+            line_edit.setText(file_path)
+
+    def get_settings(self):
+        settings = {}
+        settings["api_token"] = self.ui.apiTokenLineEdit.text()
+        settings["worker_table_path"] = self.ui.workerTableLineEdit.text()
+        settings["task_template_path"] = self.ui.taskPathLineEdit.text()
+        settings["statement_template_path"] = self.ui.statementPathLineEdit.text()
+        settings["act_template_path"] = self.ui.actPathLineEdit.text()
+        settings["output_dir"] = self.ui.savePathLineEdit.text()
+        return settings
+
 
 class MainWindow(QMainWindow, Ui_MainWindow):
 
@@ -27,40 +126,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.projectInfoButton.clicked.connect(self.get_project_info)
         self.generateButton.clicked.connect(self.generate)
 
-        self.tableWIthDataAction.triggered.connect(self.select_folder_with_workers_data)
+        self.tableWIthDataAction.triggered.connect(self.open_settings)
 
         self.current_project = None
 
+    def open_settings(self):
+        dialog = SettingsDialog(self.settings, self)          
+        result = dialog.exec()                 
+
+        if result == QDialog.Accepted:
+            value = dialog.get_settings()
+            print(f"Получены настройки: {value}")
+        else:
+            print("Настройки отменены")
+
     def check_required_settings(self):
-        if not self.settings.has("api_token"):
-            token, ok = QInputDialog.getText(
-                self,
-                "API Токен",
-                "Введите API токен для доступа к данным:",
-                QLineEdit.EchoMode.Password
-            )
-            if ok and token:
-                self.settings.set("api_token", token)
-            else:
-                QMessageBox.critical(self, "Ошибка", "API токен обязателен для работы приложения.")
-        
-        required = [
-            ("worker_table_path", "Выберите файл с данными о работниках", "*.xlsx"),
-            ("act_template_path", "Выберите файл с шаблоном акта (.docx)", "*.docx"),
-            ("task_template_path", "Выберите файл с шаблоном задания (.docx)", "*.docx"),
-            ("statement_template_path", "Выберите файл с шаблоном заверения (.docx)", "*.docx"),
-            ("output_dir", "Выберите папку для сохранения файлов", None),
-        ]
-        for key, title, file_filter in required:
-            if not self.settings.has(key):
-                if file_filter:
-                    path, _ = QFileDialog.getOpenFileName(self, title, "", file_filter)
-                else:
-                    path = QFileDialog.getExistingDirectory(self, title)
-                if path:
-                    self.settings.set(key, path)
-                else:
-                    QMessageBox.critical(self, "Ошибка", f"Не выбран {title}")
+        for s in SettingsKey.all_keys():
+            if not self.settings.get(s):
+                self.open_settings()
+                break
 
     def select_folder(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Выберите файл шрифта", "", "*.glyphs (*.glyphs*)")

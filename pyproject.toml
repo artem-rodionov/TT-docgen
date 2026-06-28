@@ -21,4 +21,4 @@ dependencies = [
 where = ["src"]
 
 [tool.ruff]
-exclude = ["src/docgen/design.py"]
+exclude = ["src/docgen/design"]
