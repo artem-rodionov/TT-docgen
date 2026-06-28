@@ -1,4 +1,4 @@
-name: Build macOS executable
+name: Build executable
 
 on:
   push:
@@ -54,6 +54,7 @@ jobs:
           else
             WINDOWED=""
           fi
+          echo $WINDOWED
           pyinstaller $WINDOWED --onedir --name DocGen \
             --hidden-import openstep_plist.util \
             --hidden-import openstep_plist.parser \
