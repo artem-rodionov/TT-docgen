@@ -23,5 +23,6 @@ where = ["src"]
 [tool.ruff]
 exclude = ["src/docgen/design"]
 
-[pytest]
+[tool.pytest.ini_options]
 pythonpath = ["src"]
+testpaths = ["src"]
