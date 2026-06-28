@@ -2,6 +2,18 @@ import json
 import sys
 from pathlib import Path
 
+class SettingsKey:
+    API_TOKEN = "api_token"
+    WORKER_TABLE_PATH = "worker_table_path"
+    TASK_TEMPLATE_PATH = "task_template_path"
+    STATEMENT_TEMPLATE_PATH = "statement_template_path"
+    ACT_TEMPLATE_PATH = "act_template_path"
+    OUTPUT_DIR = "output_dir"
+
+    @classmethod
+    def all_keys(cls):
+        return [getattr(cls, attr) for attr in dir(cls) if not attr.startswith("_") and attr.isupper()]
+
 class SettingsManager:
 
     def __init__(self, filename="settings.json"):
@@ -34,6 +46,7 @@ class SettingsManager:
         except IOError as e:
             print(f"Ошибка сохранения настроек: {e}")
 
+    
     def get(self, key, default=None):
         return self._settings.get(key, default)
 
@@ -47,4 +60,13 @@ class SettingsManager:
     def remove(self, key):
         if key in self._settings:
             del self._settings[key]
+            self.save()
+
+    def update(self, settings_dict):
+        changed = False
+        for key, value in settings_dict.items():
+            if self.get(key) != value:
+                self._settings[key] = value
+                changed = True
+        if changed:
             self.save()
