@@ -9,14 +9,14 @@ class DataFetcher:
     def get_projects(self):
         '''Получение списка всех проектов.'''
         url = f"https://uchet.type-tech.ru/api/projects?token={self.token}"
-        response = requests.get(url)
+        response = requests.get(url, verify=False)
         response.raise_for_status()
         return response.json()["projects"]
     
     def get_project_info(self, id):
         '''Получение информации о проекте.'''
         url = f"https://uchet.type-tech.ru/api/project/{id}/authors-summary?token={self.token}"
-        response = requests.get(url)
+        response = requests.get(url, verify=False)
         response.raise_for_status()
         return response.json()
     
