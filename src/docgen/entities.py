@@ -1,5 +1,6 @@
 import glyphsLib
 import enum
+import logging
 from typing import List, Dict
 from datetime import date, datetime
 
@@ -110,7 +111,9 @@ def create_worker(worker_dict: Dict, data, mapping) -> Worker:
     full_name = real_name.split(" ")
     last_name = full_name[0]
     first_name = full_name[1]
-    patronymic = full_name[2]
+    patronymic = ""
+    if len(full_name) == 3:
+        patronymic = full_name[2]
     position = worker_data[1]
     inn = worker_data[9]
     outsource = worker_dict["is_outsource"]

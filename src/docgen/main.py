@@ -167,9 +167,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         except Exception as e:
             if isinstance(e, KeyError):
                 QMessageBox.warning(self, "Ошибка", f"В таблице нет работника: {str(e)}\n\nДобавьте информацию о работнике и загрузите проект снова.")
+                return
             if isinstance(e, ValueError):
                 QMessageBox.warning(self, "Ошибка", f"В таблице нет ФИО работника: {str(e)}\n\nДобавьте информацию о работнике и загрузите проект снова.")
-            return
+                return
+            QMessageBox.critical(
+                self,
+                f"{e.__class__}",
+                f'{type(e).__name__}: ' + str(e),
+                QMessageBox.Ok)
             
 
         self.startDate.setDate(self.current_project.start_date)
