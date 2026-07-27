@@ -27,7 +27,7 @@ class DataFetcher:
         for row in sheet.iter_rows(values_only=True):
             i = 0
             while i < len(row):
-                col = row[i]
+                col = str(row[i]).strip()
                 if col is not None:
                     if row[i+1] is None:
                         raise ValueError(col)
