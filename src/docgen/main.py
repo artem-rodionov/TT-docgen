@@ -173,7 +173,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 return
             QMessageBox.critical(
                 self,
-                f"{e.__class__}",
+                f"Внутренняя ошибка {e.__class__}",
                 f'{type(e).__name__}: ' + str(e),
                 QMessageBox.Ok)
             
