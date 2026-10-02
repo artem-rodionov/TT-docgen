@@ -1,312 +1,237 @@
 from datetime import date
-from functools import partial
 import logging
-import time
+import sys
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QDialog
+from PySide6.QtWidgets import (
+    QApplication, 
+    QMainWindow, 
+    QFileDialog, 
+    QMessageBox, 
+    QDialog
+)
 from docgen.design.design import Ui_MainWindow
 from docgen.design.ui_settings import Ui_Dialog
-from docgen.entities import Font, font_styles, WorkType
-from docgen.core import get_project_data, get_projects, generate_acts, generate_statements, generate_tasks
+from docgen.entities import font_styles, WorkType
+from docgen.core import get_project_data
 from docgen.settings_manager import SettingsManager, SettingsKey
+from docgen.orchestration import (
+    build_project_from_ui_state,
+    fetch_projects_with_retry,
+    generate_documents
+)
+from docgen.exceptions import (
+    DataSourceError,
+    DocgenError,
+    ProjectError,
+    ProjectNotFoundError,
+    WorkerDataError,
+)
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+SETTINGS_FIELDS = [
+    ("apiTokenLineEdit",    SettingsKey.API_TOKEN,             None,                     None),
+    ("workerTableLineEdit", SettingsKey.WORKER_TABLE_PATH,     "Таблица с данными о работниках", "*.xlsx"),
+    ("taskPathLineEdit",    SettingsKey.TASK_TEMPLATE_PATH,    "Шаблон задания",          "*.docx"),
+    ("statementPathLineEdit", SettingsKey.STATEMENT_TEMPLATE_PATH, "Шаблон заверения",    "*.docx"),
+    ("actPathLineEdit",     SettingsKey.ACT_TEMPLATE_PATH,     "Шаблон акта",             "*.docx"),
+    ("savePathLineEdit",    SettingsKey.OUTPUT_DIR,            "Папка для сохранения",    None),
+]
 
 class SettingsDialog(QDialog):
     def __init__(self, settings_manager, parent=None):
         super().__init__(parent)
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
-
         self.setWindowTitle("Настройки")
-
         self.settings = settings_manager
 
-        self.ui.apiTokenLineEdit.setText(self.settings.get(SettingsKey.API_TOKEN, ""))
-        self.ui.workerTableLineEdit.setText(self.settings.get(SettingsKey.WORKER_TABLE_PATH, ""))
-        self.ui.taskPathLineEdit.setText(self.settings.get(SettingsKey.TASK_TEMPLATE_PATH, ""))
-        self.ui.statementPathLineEdit.setText(self.settings.get(SettingsKey.STATEMENT_TEMPLATE_PATH, ""))
-        self.ui.actPathLineEdit.setText(self.settings.get(SettingsKey.ACT_TEMPLATE_PATH, ""))
-        self.ui.savePathLineEdit.setText(self.settings.get(SettingsKey.OUTPUT_DIR, ""))
+        for line_edit_name, key, label, mask in SETTINGS_FIELDS:
+            line_edit = getattr(self.ui, line_edit_name)
+            line_edit.setText(self.settings.get(key, ""))
 
-        self.ui.workerBrowseButton.clicked.connect(
-            partial(self.select_folder,
-                    self.ui.workerTableLineEdit,
-                    "Таблица с данными о работниках", 
-                    "*.xlsx"
-            )
-        )
-        self.ui.taskBrowseButton.clicked.connect(
-            partial(self.select_folder,
-                    self.ui.taskPathLineEdit,
-                    "Шаблон задания", 
-                    "*.docx"
-            )
-        )
-        self.ui.statementBrowseButton.clicked.connect(
-            partial(self.select_folder,
-                    self.ui.statementPathLineEdit,
-                    "Шаблон заверения", 
-                    "*.docx"
-            )
-        )
-        self.ui.actBrowseButton.clicked.connect(
-            partial(self.select_folder,
-                    self.ui.actPathLineEdit,
-                    "Шаблон акта", 
-                    "*.docx"
-            )
-        )
-        self.ui.saveBrowseButton.clicked.connect(
-            partial(self.select_folder,
-                    self.ui.savePathLineEdit,
-                    "Папка для сохранения", 
-                    None
-            )
-        )
+            browse_name = line_edit_name.replace("LineEdit", "BrowseButton")
+            browse = getattr(self.ui, browse_name, None)
+            if browse is not None and label is not None:
+                browse.clicked.connect(
+                    lambda _=False, le=line_edit, lbl=label, m=mask: self._select_path(le, lbl, m)
+                )
 
-        self.ui.buttonBox.accepted.connect(self.save_and_accept)
+        self.ui.buttonBox.accepted.connect(self._save_and_accept)
         self.ui.buttonBox.rejected.connect(self.reject)
-    
-    def save_and_accept(self):
-        new_settings = {
-            SettingsKey.API_TOKEN: self.ui.apiTokenLineEdit.text(),
-            SettingsKey.WORKER_TABLE_PATH: self.ui.workerTableLineEdit.text(),
-            SettingsKey.TASK_TEMPLATE_PATH: self.ui.taskPathLineEdit.text(),
-            SettingsKey.STATEMENT_TEMPLATE_PATH: self.ui.statementPathLineEdit.text(),
-            SettingsKey.ACT_TEMPLATE_PATH: self.ui.actPathLineEdit.text(),
-            SettingsKey.OUTPUT_DIR: self.ui.savePathLineEdit.text()
-        }
-        self.settings.update(new_settings)
-        self.accept()
-    
-    def select_folder(self, line_edit,  name: str, file_type: str):
-        initial_dir = line_edit.text() or ""
-        if file_type:
-            file_path, _ = QFileDialog.getOpenFileName(
-                self,
-                f"Выберите файл {name}",
-                initial_dir,
-                file_type
-            )
+        
+    def _select_path(self, line_edit, label: str, mask: str | None) -> None:
+        initial = line_edit.text() or ""
+        if mask:
+            file_path, _ = QFileDialog.getOpenFileName(self, f"Выберите файл: {label}", initial, mask)
         else:
-            file_path = QFileDialog.getExistingDirectory(
-                self,
-                f"Выберите папку {name}",
-                initial_dir
-            )
+            file_path = QFileDialog.getExistingDirectory(self, f"Выберите папку: {label}", initial)
         if file_path:
             line_edit.setText(file_path)
 
-    def get_settings(self):
-        settings = {}
-        settings[SettingsKey.API_TOKEN] = self.ui.apiTokenLineEdit.text()
-        settings[SettingsKey.WORKER_TABLE_PATH] = self.ui.workerTableLineEdit.text()
-        settings[SettingsKey.TASK_TEMPLATE_PATH] = self.ui.taskPathLineEdit.text()
-        settings[SettingsKey.STATEMENT_TEMPLATE_PATH] = self.ui.statementPathLineEdit.text()
-        settings[SettingsKey.ACT_TEMPLATE_PATH] = self.ui.actPathLineEdit.text()
-        settings[SettingsKey.OUTPUT_DIR] = self.ui.savePathLineEdit.text()
-        return settings
+    def collect_settings(self) -> dict:
+        return {
+            key: getattr(self.ui, name).text()
+            for name, key, _, _ in SETTINGS_FIELDS
+        }
+
+    def _save_and_accept(self) -> None:
+        self.settings.update(self.collect_settings())
+        self.accept()
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
 
     def __init__(self):
         super().__init__()
-        
         self.setupUi(self)
         self.settings = SettingsManager()
-
-        self._check_required_settings()
-        
-        self._setup_projects()
-        
-        self.styleComboBox.addItems(font_styles)
-        self.browseButton.clicked.connect(self.select_folder)
-        self.projectInfoButton.clicked.connect(self.get_project_info)
-        self.generateButton.clicked.connect(self.generate)
-
-        self.tableWIthDataAction.triggered.connect(self.open_settings)
-        self.projectsReloadAction.triggered.connect(self._setup_projects)
-
         self.current_project = None
 
-    def open_settings(self):
-        dialog = SettingsDialog(self.settings, self)          
-        result = dialog.exec()                 
+        self.styleComboBox.addItems(font_styles)
 
-        if result == QDialog.Accepted:
-            value = dialog.get_settings()
-            print(f"Получены настройки: {value}")
-        else:
-            print("Настройки отменены")
+        self.browseButton.clicked.connect(self._choose_font)
+        self.projectInfoButton.clicked.connect(self._load_project)
+        self.generateButton.clicked.connect(self._generate)
 
-    def _check_required_settings(self):
-        for s in SettingsKey.all_keys():
-            if not self.settings.get(s):
-                self.open_settings()
-                break
+        self.tableWIthDataAction.triggered.connect(self._open_settings)
+        self.projectsReloadAction.triggered.connect(self._reload_projects)
 
-    def select_folder(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, "Выберите файл шрифта", "", "*.glyphs (*.glyphs*)")
-        if file_path:
-            self.pathLineEdit.setText(file_path)
+        if not self._settings_complete():
+            self._open_settings()
 
-    def get_project_info(self):
+        self._reload_projects()
+
+    def _settings_complete(self) -> bool:
+        return all(self.settings.get(key) for key in SettingsKey.all_keys())
+
+    def _open_settings(self) -> None:
+        dialog = SettingsDialog(self.settings, self)
+        if dialog.exec() == QDialog.Accepted:
+            logging.debug("Настройки сохранены: %s", dialog.collect_settings())
+            
+    def _reload_projects(self) -> None:
+        self.projectsComboBox.clear()
+        if not self._settings_complete():
+            return
+
+        try:
+            projects = fetch_projects_with_retry(self.settings, interval=2, timeout=10)
+        except DataSourceError as e:
+            QMessageBox.critical(self, e.default_title, f"{e}\n\n{e.default_message}")
+            return
+        except Exception as e:
+            logging.exception("Не удалось получить проекты")
+            QMessageBox.critical(
+                self, "Ошибка получения проектов",
+                f"{type(e).__name__}: {e}",
+            )
+            return
+        self.projectsComboBox.addItems(projects.keys())
+
+    def _load_project(self) -> None:
         project_name = self.projectsComboBox.currentText()
         if not project_name:
             QMessageBox.warning(self, "Ошибка", "Введите название проекта")
             return
-        
-        self.headWorkerBox.clear()
-        if self.current_project:
-            self.current_project.workers = []
 
         try:
-            self.current_project = get_project_data(project_name, self.settings)
+            new_project = get_project_data(project_name, self.settings)
+        except ProjectNotFoundError as e:
+            QMessageBox.warning(self, e.default_title, f"{e}\n\nОбновите список проектов.")
+            return
+        except WorkerDataError as e:
+            QMessageBox.warning(self, e.default_title, f"{e}\n\n{e.default_message}")
+            return
+        except DataSourceError as e:
+            QMessageBox.critical(self, e.default_title, f"{e}\n\n{e.default_message}")
+            return
+        except DocgenError as e:
+            QMessageBox.warning(self, e.default_title, str(e))
+            return
         except Exception as e:
-            if isinstance(e, KeyError):
-                QMessageBox.warning(self, "Ошибка", f"В таблице нет работника: {str(e)}\n\nДобавьте информацию о работнике и загрузите проект снова.")
-                return
-            if isinstance(e, ValueError):
-                QMessageBox.warning(self, "Ошибка", f"В таблице нет ФИО работника: {str(e)}\n\nДобавьте информацию о работнике и загрузите проект снова.")
-                return
-            QMessageBox.critical(
-                self,
-                f"Внутренняя ошибка {e.__class__}",
-                f'{type(e).__name__}: ' + str(e),
-                QMessageBox.Ok)
-            
+            logging.exception("Непредвиденная ошибка загрузки проекта")
+            QMessageBox.critical(self, f"Внутренняя ошибка ({type(e).__name__})", str(e))
+            return
 
-        self.startDate.setDate(self.current_project.start_date)
-        self.endDate.setDate(self.current_project.end_date)
+        self.current_project = new_project
+        self.startDate.setDate(new_project.start_date)
+        self.endDate.setDate(new_project.end_date)
         self.currentDate.setDate(date.today())
-        self.headWorkerBox.addItems([w.full_name() for w in self.current_project.workers])
 
-    def select_folder_with_workers_data(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, "Выберите файл с данными о работниках", "", "*.xlsx (*.xlsx)")
+        self.headWorkerBox.clear()
+        self.headWorkerBox.addItems(w.full_name() for w in new_project.workers)
+        if self.headWorkerBox.count() > 0:
+            self.headWorkerBox.setCurrentIndex(0)
+
+    def _choose_font(self) -> None:
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Выберите файл шрифта", "", "*.glyphs (*.glyphs*)"
+        )
         if file_path:
-            QMessageBox.information(self, "Успех", f"Файл {file_path} выбран")
-        else:
-            QMessageBox.warning(self, "Ошибка", "Файл не выбран")
+            self.pathLineEdit.setText(file_path)
 
-    def generate(self):
-        if not self.pathLineEdit.toPlainText():
-            QMessageBox.warning(self, "Ошибка", "Выберите файл шрифта")
-            return
-        
-        if not self.styleComboBox.currentText():
-            QMessageBox.warning(self, "Ошибка", "Выберите название стиля")
-            return
-
+    def _generate(self) -> None:
         if not self.current_project:
             QMessageBox.warning(self, "Ошибка", "Данные проекта не загружены")
             return
-        
-        start_date = self.startDate.date().toPython()
-        end_date = self.endDate.date().toPython()
-        current_date = self.currentDate.date().toPython()
 
-        if self.current_project and self.current_project.start_date != start_date:
-            logging.debug(f"Дата начала проекта изменена с {self.current_project.start_date} на {start_date}")
-            self.current_project.start_date = start_date
-            
-        if self.current_project and self.current_project.end_date != end_date:
-            logging.debug(f"Дата окончания проекта изменена с {self.current_project.end_date} на {end_date}")
-            self.current_project.end_date = end_date
+        work_type = WorkType.Create if self.workTypeCheckBox.isChecked() else WorkType.Update
 
-        if self.current_project and self.current_project.current_date != current_date:
-            logging.debug(f"Текущая дата проекта изменена с {self.current_project.current_date} на {current_date}")
-            self.current_project.current_date = current_date
+        try:
+            build_project_from_ui_state(
+                self.current_project,
+                start_date=self.startDate.date().toPython(),
+                end_date=self.endDate.date().toPython(),
+                current_date=self.currentDate.date().toPython(),
+                style=self.styleComboBox.currentText(),
+                font_path=self.pathLineEdit.toPlainText(),
+                head_index=self.headWorkerBox.currentIndex(),
+                work_type=work_type,
+            )
+        except ProjectError as e:
+            QMessageBox.warning(self, e.default_title, str(e))
+            return
 
-        if self.current_project.head:
-            self.current_project.head.is_head = False
-        
-        if self.workTypeCheckBox.isChecked():
-            self.current_project.type = WorkType.Create
-        else:
-            self.current_project.type = WorkType.Update
-        
-
-        self.current_project.style = self.styleComboBox.currentText()
-        self.current_project.font = Font(self.pathLineEdit.toPlainText())
-        
-        self.current_project.head = self.current_project.workers[self.headWorkerBox.currentIndex()]
-
-        self.current_project.head.is_head = True
-
-        self.current_project.workers.sort(key=lambda w: (not w.is_head, w.full_name()))
         self.headWorkerBox.clear()
         self.headWorkerBox.addItems([w.full_name() for w in self.current_project.workers])
-        logging.debug("Вывод работников:")
-        for worker in self.current_project.workers:
-            logging.debug(worker.full_name(True))
+        if self.headWorkerBox.count() > 0:
+            self.headWorkerBox.setCurrentIndex(0)
 
-
-        self.progressBar.setValue(0)
-        self.progressBar.setVisible(True)
-
-        self.generateButton.setEnabled(False)
-        self.projectInfoButton.setEnabled(False)
-        self.browseButton.setEnabled(False)
-
-        if self.taskCheckBox.isChecked():
-            generate_tasks(self.current_project, self.settings)
-        
-        self.progressBar.setValue(33)
-
-        if self.statementCheckBox.isChecked():    
-            generate_statements(self.current_project, self.settings)
-
-        self.progressBar.setValue(66)
-        
-        if self.actsCheckBox.isChecked():
-            generate_acts(self.current_project, self.settings)
-
-        self.progressBar.setValue(100)
-        
-        self.generateButton.setEnabled(True)
-        self.projectInfoButton.setEnabled(True)
-        self.browseButton.setEnabled(True)
+        self._set_busy(True)
+        try:
+            generate_documents(
+                self.current_project,
+                self.settings,
+                do_task=self.taskCheckBox.isChecked(),
+                do_statement=self.statementCheckBox.isChecked(),
+                do_act=self.actsCheckBox.isChecked(),
+                progress_cb=self.progressBar.setValue,
+            )
+        except DocgenError as e:
+            QMessageBox.warning(self, e.default_title, f"{e}\n\n{e.default_message}")
+            return
+        except Exception as e:
+            logging.exception("Ошибка генерации")
+            QMessageBox.critical(self, f"Ошибка генерации ({type(e).__name__})", str(e))
+            return
+        finally:
+            self._set_busy(False)
 
         QMessageBox.information(self, "Успех", "Генерация завершена")
 
-    def _get_projects(self, interval=2, timeout=10):
-        start = time.time()
-        last_error = None
-        while time.time() - start < timeout:
-            try:
-                projects = get_projects(self.settings)
-                if projects is not None:  
-                    return projects
-            except Exception as e:
-                last_error = e
-                logging.debug(f"Попытка не удалась: {e}")
-            elapsed = time.time() - start
-            remaining = timeout - elapsed
-            if remaining <= 0:
-                break
-            time.sleep(min(interval, remaining))
-        if last_error:
-            QMessageBox.critical(
-            self,
-            "Ошибка получения проектов",
-            f"Не удалось получить проекты за {timeout} секунд.\n"
-            f"Последняя ошибка: {last_error}"
-        )
-        else:
-            return None
-        
-    def _setup_projects(self):
-        self.projectsComboBox.clear()
-        projects = self._get_projects(2, 10)
-        projects_names = projects.keys() if projects else []
-        self.projectsComboBox.addItems(projects_names)
+
+    def _set_busy(self, busy: bool) -> None:
+        for w in (self.generateButton, self.projectInfoButton, self.browseButton):
+            w.setEnabled(not busy)
+        self.progressBar.setVisible(busy)
+        if not busy:
+            self.progressBar.setValue(0)
+
 
                 
 
 def main():
-    app = QApplication()
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+    app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
     app.exec()

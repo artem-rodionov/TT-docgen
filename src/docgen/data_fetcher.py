@@ -2,23 +2,29 @@ import requests
 from openpyxl import load_workbook
 
 class DataFetcher:
-    def __init__(self, token: str, path: str) -> None:
+    def __init__(self, token: str, path: str,
+                 base_url: str = "https://uchet.type-tech.ru/api",
+                 session: requests.Session | None = None,
+                 verify: bool = False) -> None:
         self.token = token
+        self.base_url = base_url.rstrip("/")
         self.table = load_workbook(path, data_only=True)
+        self.session = session or requests.Session()
+        self.verify = verify
+
+    def _get(self, endpoint: str) -> dict:
+        url = f"{self.base_url}/{endpoint}"
+        response = self.session.get(url, params={"token": self.token}, verify=self.verify)
+        response.raise_for_status()
+        return response.json()
 
     def get_projects(self):
         '''Получение списка всех проектов.'''
-        url = f"https://uchet.type-tech.ru/api/projects?token={self.token}"
-        response = requests.get(url, verify=False)
-        response.raise_for_status()
-        return response.json()["projects"]
+        return self._get("projects")["projects"]
     
-    def get_project_info(self, id):
+    def get_project_info(self, project_id):
         '''Получение информации о проекте.'''
-        url = f"https://uchet.type-tech.ru/api/project/{id}/authors-summary?token={self.token}"
-        response = requests.get(url, verify=False)
-        response.raise_for_status()
-        return response.json()
+        return self._get(f"project/{project_id}/authors-summary")
     
     def get_workers_mapping(self):
         '''Получение соответствия ФИО и имен из БД.'''
@@ -27,15 +33,18 @@ class DataFetcher:
         for row in sheet.iter_rows(values_only=True):
             i = 0
             while i < len(row):
-                col = str(row[i]).strip()
-                if col is not None:
-                    if row[i+1] is None:
-                        raise ValueError(col)
-                    names[col] = str(row[i+1]).strip()
-                    i += 2
+                cell = row[i]
+                if cell is None or str(cell).strip() == "":
+                    i += 1
                     continue
-                i += 1
-        print(names)
+                
+                col = str(cell).strip()
+                next_cell = row[i + 1] if i + 1 < len(row) else None
+                if next_cell is None or str(next_cell).strip() == "":
+                    raise ValueError(f"Для '{col}' не указано соответствие")
+                
+                names[col] = str(next_cell).strip()
+                i += 2
         return names
 
     def get_workers_data(self):

@@ -12,6 +12,7 @@ dependencies = [
     "pyinstaller>=6.20.0",
     "pyside6>=6.11.1",
     "pytest>=9.0.3",
+    "pytest-mock>=3.16.0",
     "pyyaml>=6.0.3",
     "requests>=2.33.1",
     "ruff>=0.15.15",
@@ -26,3 +27,6 @@ exclude = ["src/docgen/design"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["src"]
+markers = [
+    "integration: тесты, требующие реального API_TOKEN или боевого API",
+]
