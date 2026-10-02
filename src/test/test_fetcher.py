@@ -1,77 +1,125 @@
-import requests
+from unittest.mock import MagicMock
 
 import pytest
-import os
-from docgen.data_fetcher import DataFetcher
+import requests
 
-def get_api_token():
-    token = os.environ.get("API_TOKEN")
-    if token is None:
-        pytest.skip("API_TOKEN not set, skipping integration tests")
-    return token
+from docgen.data_fetcher import DataFetcher
+from conftest import EXPECTED_MAPPING, EXPECTED_WORKERS_DATA
+
 
 @pytest.fixture
-def path():
-    if os.path.exists("src/test/fixtures/workers.xlsx"):
-        return "src/test/fixtures/workers.xlsx"
-    return None
+def fake_session():
+    """Мок requests.Session с эмуляцией двух эндпоинтов API."""
+    session = MagicMock()
 
-mapping = {
-    "Имя в базе": "ФИО",
-    "Степашка": "Иванов Иван Иванович",
-    "Директор": "Фамилия Имя Отчество"
-}
+    def fake_get(url, params=None, verify=False):
+        resp = MagicMock()
+        resp.raise_for_status = MagicMock()
+        if url.endswith("/projects"):
+            resp.json.return_value = {
+                "projects": [{"id": 42, "name": "Alpha"}, {"id": 7, "name": "Beta"}]
+            }
+        elif "/project/42/authors-summary" in url:
+            resp.json.return_value = {
+                "status": "ok",
+                "project_id": 42,
+                "start_date": "2024-01-15",
+                "end_date": "2024-03-20",
+                "authors": [
+                    {"name": "Степашка", "position": "Дизайнер",
+                     "is_outsource": False, "tasks": []},
+                ],
+            }
+        else:
+            raise AssertionError(f"Unexpected URL: {url}")
+        return resp
 
-data = {
-    "Иванов Иван Иванович": ["Департамент производство", "Графический дизайнер", "20.06.2002", 
-                             "Паспорт гражданина РФ", "693-788", "Отделом внутренних дел Ленинского р-на г. Екатеринбурга", 
-                             "15.11.2014", "577471", "6786", "г. Москва, наб. Обводного канала, д. 133, кв. 103",
-                             "046123663373", "АО \"АЛЬФА-БАНК\" №1", "79921665959502890126", "898698725"]
-}
+    session.get.side_effect = fake_get
+    return session
 
-def test_fetcher_get_projects(path):
-    api_token = get_api_token()
-    fetcher = DataFetcher(path=path, token=api_token)
-    try:
-        projects = fetcher.get_projects()
-    except requests.exceptions.HTTPError as e:
-        status = e.response.status_code
-        pytest.fail(f"HTTP error {status} while fetching projects")
-    except Exception as e:
-        pytest.fail(f"Unexpected error: {type(e).__name__}")
-    
-    if not projects:
-        pytest.fail("No projects fetched")
 
-def test_fetcher_with_invalid_token(path):
-    fetcher = DataFetcher(path=path, token="invalid_token")
-    try:
+# ---------- проекты ----------
+
+def test_get_projects_returns_list(workers_xlsx, fake_session):
+    fetcher = DataFetcher(token="t", path=workers_xlsx, session=fake_session)
+    assert fetcher.get_projects() == [
+        {"id": 42, "name": "Alpha"},
+        {"id": 7, "name": "Beta"},
+    ]
+
+
+def test_get_projects_passes_token_in_params(workers_xlsx, fake_session):
+    fetcher = DataFetcher(token="SECRET", path=workers_xlsx, session=fake_session)
+    fetcher.get_projects()
+
+    _, kwargs = fake_session.get.call_args
+    assert kwargs["params"]["token"] == "SECRET"
+
+
+def test_get_projects_propagates_http_error(workers_xlsx):
+    session = MagicMock()
+    resp = MagicMock()
+    resp.raise_for_status.side_effect = requests.HTTPError("500 Server Error")
+    session.get.return_value = resp
+
+    fetcher = DataFetcher(token="t", path=workers_xlsx, session=session)
+    with pytest.raises(requests.HTTPError):
         fetcher.get_projects()
-        pytest.fail("Expected exception not raised")
-    except Exception:
-        pass
-    
-def test_fetcher_with_invalid_path():
-    try:
-        DataFetcher(path="invalid_path", token="invalid_token")
-        pytest.fail("Expected exception not raised")
-    except Exception:
-        pass
 
-def test_fetcher_mapping(path):
-    fetcher = DataFetcher(path=path, token="")
-    try:
-        names = fetcher.get_workers_mapping()
-        assert names is not None
-        assert names == mapping
-    except Exception as e:
-        pytest.fail(f"Exception occurred: {e}")
 
-def test_fetcher_workers_data(path):
-    fetcher = DataFetcher(path=path, token="")
-    try:
-        workers_data = fetcher.get_workers_data()
-        assert workers_data is not None
-        assert workers_data["Иванов Иван Иванович"] == data["Иванов Иван Иванович"]
-    except Exception as e:
-        pytest.fail(f"Exception occurred: {e}")
+# ---------- информация о проекте ----------
+
+def test_get_project_info(workers_xlsx, fake_session):
+    fetcher = DataFetcher(token="t", path=workers_xlsx, session=fake_session)
+    info = fetcher.get_project_info(42)
+    assert info["status"] == "ok"
+    assert info["authors"][0]["name"] == "Степашка"
+
+
+def test_get_project_info_unknown_id(workers_xlsx, fake_session):
+    fetcher = DataFetcher(token="t", path=workers_xlsx, session=fake_session)
+    with pytest.raises(AssertionError, match="Unexpected URL"):
+        fetcher.get_project_info(999)
+
+
+# ---------- xlsx ----------
+
+def test_get_workers_mapping(workers_xlsx, fake_session):
+    fetcher = DataFetcher(token="t", path=workers_xlsx, session=fake_session)
+    assert fetcher.get_workers_mapping() == EXPECTED_MAPPING
+
+
+def test_get_workers_data(workers_xlsx, fake_session):
+    fetcher = DataFetcher(token="t", path=workers_xlsx, session=fake_session)
+    data = fetcher.get_workers_data()
+    assert "Иванов Иван Иванович" in data
+    assert data["Иванов Иван Иванович"] == EXPECTED_WORKERS_DATA["Иванов Иван Иванович"]
+
+
+def test_get_workers_mapping_raises_on_missing_pair(tmp_path):
+    from openpyxl import Workbook
+
+    p = tmp_path / "bad.xlsx"
+    wb = Workbook()
+    ws0 = wb.active
+    ws0.title = "Data"
+    ws0.append([None] * 15)
+    ws1 = wb.create_sheet("Map")
+    ws1.append(["Степашка", None, None, None])
+    wb.save(str(p))
+
+    fetcher = DataFetcher(token="t", path=str(p))
+    with pytest.raises(ValueError, match="Степашка"):
+        fetcher.get_workers_mapping()
+
+
+# ---------- ошибки создания ----------
+
+def test_invalid_path_raises():
+    with pytest.raises((FileNotFoundError, ValueError)):
+        DataFetcher(token="t", path="/nope/does-not-exist.xlsx")
+
+
+def test_none_path_raises_type_error():
+    with pytest.raises(TypeError):
+        DataFetcher(token="t", path=None)
