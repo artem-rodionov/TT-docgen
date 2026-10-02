@@ -23,11 +23,23 @@ jobs:
         with:
           python-version-file: ".python-version"
 
+      - name: Checkout private glyphs repo
+        uses: actions/checkout@v4
+        with:
+          repository: artem-rodionov/docgen-private
+          path: .docgen-private
+          ssh-key: ${{ secrets.PRIVATE_DEPLOY_KEY }}
+
       - name: Install dependencies
         run: uv sync
 
       - name: Run linter
         run: uv run ruff check .
+
+      - name: Copy files into fake
+        run: |
+          mkdir -p src/test/fixtures
+          cp -r .docgen-private/. src/test/fixtures/
 
       - name: Run tests
         env:
