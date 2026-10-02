@@ -27,14 +27,15 @@ class DataFetcher:
         for row in sheet.iter_rows(values_only=True):
             i = 0
             while i < len(row):
-                col = row[i]
+                col = str(row[i]).strip()
                 if col is not None:
                     if row[i+1] is None:
                         raise ValueError(col)
-                    names[col] = row[i+1]
+                    names[col] = str(row[i+1]).strip()
                     i += 2
                     continue
                 i += 1
+        print(names)
         return names
 
     def get_workers_data(self):
@@ -46,6 +47,6 @@ class DataFetcher:
                 continue
             other_cols = [row[i] for i in range(15) if i != 2]
 
-            workers[row[2]] = other_cols
+            workers[str(row[2]).strip()] = other_cols
 
         return workers

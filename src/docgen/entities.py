@@ -1,5 +1,6 @@
 import glyphsLib
 import enum
+import logging
 from typing import List, Dict
 from datetime import date, datetime
 
@@ -42,7 +43,7 @@ class Passport:
 
 class Worker:
     '''Класс работника'''
-    def __init__(self, last_name: str, first_name: str, patronymic: str, outsource: bool, position: str, tasks: List[Dict], passport: Passport, inn: str) -> None:
+    def __init__(self, last_name: str, first_name: str, patronymic: str, outsource: bool, position: str, tasks: List[Dict], passport: Passport, inn: str, department: str) -> None:
         self.last_name = last_name
         self.first_name = first_name
         self.patronymic = patronymic
@@ -52,6 +53,7 @@ class Worker:
         self.tasks = tasks
         self.passport = passport
         self.inn = inn
+        self.department = department
 
     def full_name(self, InTable: bool = False) -> str:
         '''Возвращает полное имя в формате: Фамилия Имя Отчество.'''
@@ -110,11 +112,15 @@ def create_worker(worker_dict: Dict, data, mapping) -> Worker:
     full_name = real_name.split(" ")
     last_name = full_name[0]
     first_name = full_name[1]
-    patronymic = full_name[2]
+    patronymic = ""
+    if len(full_name) == 3:
+        patronymic = full_name[2]
     position = worker_data[1]
     inn = worker_data[9]
     outsource = worker_dict["is_outsource"]
     tasks = worker_dict["tasks"]
+    department = worker_data[0]
+    logging.info(f"Worker {last_name} created in {department}")
     return Worker(
         last_name=last_name,
         first_name=first_name,
@@ -123,13 +129,15 @@ def create_worker(worker_dict: Dict, data, mapping) -> Worker:
         position=position,
         tasks=tasks,
         passport=passport,
-        inn=inn
+        inn=inn,
+        department=department
     )
 
 def create_workers_from_map(list_from_db: List, data, mapping_name) -> List[Worker]:
     workers = []
     for w in list_from_db:
-        workers.append(create_worker(w, data, mapping_name))
+        worker = create_worker(w, data, mapping_name)
+        workers.append(worker)
     return workers
 
 font_styles = [
