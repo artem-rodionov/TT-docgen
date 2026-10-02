@@ -39,7 +39,7 @@ jobs:
       - name: Copy files into fake
         run: |
           mkdir -p src/test/fixtures
-          cp -r .docgen-private/. src/test/fixtures/
+          cp -r .docgen-private/. src/test/fake/
 
       - name: Run tests
         env:
