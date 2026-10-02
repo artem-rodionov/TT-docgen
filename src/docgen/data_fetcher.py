@@ -33,14 +33,18 @@ class DataFetcher:
         for row in sheet.iter_rows(values_only=True):
             i = 0
             while i < len(row):
-                col = str(row[i]).strip()
-                if col is not None:
-                    if row[i+1] is None:
-                        raise ValueError(f"Для '{col}' не указано соответствие")
-                    names[col] = str(row[i+1]).strip()
-                    i += 2
+                cell = row[i]
+                if cell is None or str(cell).strip() == "":
+                    i += 1
                     continue
-                i += 1
+                
+                col = str(cell).strip()
+                next_cell = row[i + 1] if i + 1 < len(row) else None
+                if next_cell is None or str(next_cell).strip() == "":
+                    raise ValueError(f"Для '{col}' не указано соответствие")
+                
+                names[col] = str(next_cell).strip()
+                i += 2
         return names
 
     def get_workers_data(self):
