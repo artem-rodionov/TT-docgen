@@ -15,7 +15,9 @@ from typing import Dict
 
 def _make_fetcher(settings, factory=DataFetcher) -> DataFetcher:
     try:
-        return factory(SettingsKey.API_TOKEN, SettingsKey.WORKER_TABLE_PATH)
+        return factory(settings.get(SettingsKey.API_TOKEN),
+                       settings.get(SettingsKey.WORKER_TABLE_PATH)
+                       )
     except (OSError, ValueError, TypeError) as e:
         raise WorkerDataError(f"Не удалось прочитать таблицу работников: {e}") from e
 
