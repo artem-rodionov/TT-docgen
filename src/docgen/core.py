@@ -3,6 +3,7 @@ from pathlib import Path
 from docgen.data_fetcher import DataFetcher
 from docgen.entities import Project, create_workers_from_map
 from docgen.generators import generate_act, generate_task, generate_statement
+from docgen.settings_manager import SettingsKey
 from docxtpl import DocxTemplate
 from typing import Dict
 
@@ -64,7 +65,7 @@ def get_project_data(project_name: str, settings) -> Project:
 
 
 def get_output_dir(settings) -> Path:
-    out_dir = settings.get("output_dir")
+    out_dir = settings.get(SettingsKey.OUTPUT_DIR)
     if not out_dir:
         raise ValueError("Не задана папка для сохранения (output_dir)")
     return Path(out_dir)
