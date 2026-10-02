@@ -149,7 +149,8 @@ def test_full_generation_pipeline(tmp_path, settings, fake_session, mocker):
     mocker.patch.object(Worker, "get_outsource_table", return_value=[])
     mocker.patch.object(Worker, "get_insource_table", return_value=[])
 
-    fetcher_factory = lambda token, path: DataFetcher(token, path, session=fake_session)
+    def fetcher_factory(token, path):
+            return DataFetcher(token, path, session=fake_session)
 
     project = get_project_data("TestProj", settings_dict, fetcher_factory=fetcher_factory)
     assert project.work_name == "TestProj"
@@ -189,7 +190,6 @@ def test_full_generation_pipeline(tmp_path, settings, fake_session, mocker):
 
     assert progress == [0, 33, 66, 100]
 
-    # ---- 6. Проверка файлов ----
     act_files = list(out_dir.glob("act_*.docx"))
     task_files = list(out_dir.glob("task_*.docx"))
     statement_files = list(out_dir.glob("statement_*.docx"))
@@ -227,7 +227,9 @@ def test_full_generation_with_real_worker_parsing(tmp_path, settings, fake_sessi
 
     mocker.patch("docgen.generators.split_into_columns", return_value=([], [], []))
 
-    fetcher_factory = lambda token, path: DataFetcher(token, path, session=fake_session)
+    def fetcher_factory(token, path):
+        return DataFetcher(token, path, session=fake_session)
+
     project = get_project_data("TestProj", settings_dict, fetcher_factory=fetcher_factory)
 
     assert len(project.workers) == 1
